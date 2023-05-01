@@ -69,6 +69,19 @@ app.post("/", function (req,res){
   res.redirect("/");
  
 });
+
+app.post("/delete",function(req,res){
+  const checkedItemId = req.body.checkbox.trim();
+
+  Item.findByIdAndRemove(checkedItemId)
+  .then(() => {
+      console.log("Succesfully deleted checked item from the database");
+      res.redirect("/");
+  })
+  .catch((err) => {
+      console.log(err);
+  })
+});
  
 app.get("/about", function(){
   res.render("about"); 
