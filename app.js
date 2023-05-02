@@ -63,18 +63,64 @@ app.get("/", function (req,res) {
  
 });
  
-app.post("/", function (req,res){
- 
-  const itemName = req.body.newItem;
+app.post("/", (req, res) => {
+
+  let itemName = req.body.newItem
+
+  let listName = req.body.list.trim()  // Remove leading/trailing spaces
+
+
 
   const item = new Item({
-    name: itemName
-  });
 
-  item.save();
+      name: itemName,
 
-  res.redirect("/");
- 
+  })
+
+
+
+  if (listName === "Today") {
+
+      item.save()
+
+      res.redirect("/")
+
+  } else {
+
+      List.findOne({ name: listName }).exec().then(foundList => {
+
+          if (foundList) {
+
+              foundList.items.push(item)
+
+              foundList.save()
+
+              res.redirect("/" + listName)
+
+          } else {
+
+              const newList = new List({
+
+                  name: listName,
+
+                  items: [item],
+
+              })
+
+              newList.save()
+
+              res.redirect("/" + listName)
+
+          }
+
+      }).catch(err => {
+
+          console.log(err);
+
+      });
+
+  }
+
 });
 
 app.post("/delete",function(req,res){
