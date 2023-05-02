@@ -1,7 +1,8 @@
 const express = require ("express"); 
 const bodyParser = require ("body-parser"); 
-const mongoose = require ("mongoose"); 
- 
+const mongoose = require ("mongoose");
+const _ = require('lodash');
+
 const app = express (); 
  
 app.set ("view engine", "ejs"); 
@@ -90,54 +91,51 @@ app.post("/", (req, res) => {
       List.findOne({ name: listName }).exec().then(foundList => {
 
           if (foundList) {
-
               foundList.items.push(item)
-
               foundList.save()
-
               res.redirect("/" + listName)
-
           } else {
-
               const newList = new List({
-
                   name: listName,
-
                   items: [item],
-
               })
-
               newList.save()
-
               res.redirect("/" + listName)
-
           }
-
       }).catch(err => {
-
           console.log(err);
-
       });
-
   }
-
 });
 
-app.post("/delete",function(req,res){
-  const checkedItemId = req.body.checkbox.trim();
-
-  Item.findByIdAndRemove(checkedItemId)
-  .then(() => {
-      console.log("Succesfully deleted checked item from the database");
-      res.redirect("/");
-  })
-  .catch((err) => {
-      console.log(err);
-  })
+app.post("/delete", function (req, res) {
+  const checkedItemId = req.body.checkbox;
+  const listName = req.body.listName;
+ 
+  if (listName === "Today") {
+    Item.findByIdAndRemove(checkedItemId)
+      .then(function () {
+        res.redirect("/");
+      })
+      .catch(function () {
+        console.log("delete error");
+      });
+  } else {
+    List.findOneAndUpdate(
+      { name: listName },
+      { $pull: { items: { _id: checkedItemId } } }
+    )
+      .then(function (foundList) {
+        res.redirect("/" + listName);
+      })
+      .catch(function (err) {
+        console.log("err in delete item from custom list");
+      });
+  }
 });
 
 app.get("/:customListName",function(req,res){
-  const customListName = req.params.customListName;
+  const customListName = _.capitalize(req.params.customListName);
  
   List.findOne({name:customListName})
     .then(function(foundList){
